@@ -5,7 +5,6 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
-from tornado.autoreload import start
 
 #################################################
 # Database Setup
@@ -151,11 +150,11 @@ def start_date(start_date):
                    func.avg(measurements.tobs)
                    ]
 
-            d = session.query(*sel).filter(measurements.date >= start_date).all()
+            d = session.query(*sel).filter(measurements.date >= start_date).all()[0]
 
-            values_dict = {'Minimum Recorded Temperature (f)':d[0][0],
-                           'Maximum Recorded Temperature (f)':d[0][1],
-                           'Average Recorded Temperature (f)':round(d[0][2],2)}
+            values_dict = {'Minimum Recorded Temperature (f)':d[0],
+                           'Maximum Recorded Temperature (f)':d[1],
+                           'Average Recorded Temperature (f)':round(d[2],4)}
             return_dict = {start_date:values_dict}
 
             return jsonify(return_dict)
