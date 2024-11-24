@@ -20,14 +20,11 @@ Base.prepare(autoload_with=engine)
 measurements = Base.classes.measurement
 stations = Base.classes.station
 
-# Create our session (link) from Python to the DB
-
 #################################################
 # Flask Setup
 #################################################
 #Module10;Lesson 3; Activity 10; app_solution.py
 app = Flask(__name__)
-
 
 #################################################
 # Flask Routes
@@ -50,12 +47,12 @@ def precipitation():
     session = Session(engine)
 
     # get the most recent date, and subtract 1 year to get two values 12-months apart.
-    latestDate = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
-    latestDateMinusOneYear = (datetime.strptime(latestDate.replace("-", "/"), "%Y/%m/%d") - timedelta(days=365)).strftime("%Y-%m-%d")
+    latest_date = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
+    latest_date_minus_one_year = (datetime.strptime(latest_date.replace("-", "/"), "%Y/%m/%d") - timedelta(days=365)).strftime("%Y-%m-%d")
 
     #query db to retrieve the latest 12 months of precipitation (prcp) data
     d = session.query(measurements.date, measurements.prcp).\
-        filter(measurements.date >= latestDateMinusOneYear).\
+        filter(measurements.date >= latest_date_minus_one_year).\
         order_by(measurements.date.desc()).\
         all()
 
@@ -75,17 +72,17 @@ def station():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    #adding all query targets into list
+    #adding all query targets to list
     sel = [stations.station, stations.name, stations.latitude, stations.longitude, stations.elevation]
 
     #query to retrieve station data
     d = session.query(*sel).all()
 
-    # close link to database.
+    # close link to database
     session.close()
 
     #format query data into list of dictionaries
-    stations_dict = []
+    stations_list = []
     for n in d:
         station_dict = {}
         station_dict['Name'] = n[1]
@@ -94,11 +91,36 @@ def station():
         station_dict['Elevation'] = n[4]
         stations_dict.append({n[0]:station_dict})
 
+    return jsonify(stations_list)
 
-    return jsonify(stations_dict)
+
+@app.route("/api/v.1.0/tobs")
+def tobs():
+    session= Session(engine)
+
+    # get the most recent date, and subtract 1 year to get two values 12-months apart.
+    latest_date = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
+    latest_date_minus_one_year = (datetime.strptime(latest_date.replace("-", "/"), "%Y/%m/%d") - timedelta(days=365)).strftime("%Y-%m-%d")
+
+    # query to find the most active stations
+    station_count = session.query(stations.station,func.count(stations.station)). \
+        group_by(stations.station). \
+        order_by(func.count(stations.station).desc()). \
+        all()
+
+    #query to find most recent 12 months of temperature (tobs) data from most active station
+    most_active_station_data = session.query(measurements.date,measurements.tobs).\
+        filter(measurements.date >= latest_date_minus_one_year).\
+        filter(measurements.station==station_count[0][0]).\
+        all()
+
+    # close link to database
+    session.close()
+
 
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
