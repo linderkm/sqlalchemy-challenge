@@ -90,7 +90,7 @@ def station():
         station_dict['Lat'] = n[2]
         station_dict['Lon'] = n[3]
         station_dict['Elevation'] = n[4]
-        stations_dict.append({n[0]:station_dict})
+        stations_list.append({n[0]:station_dict})
 
     return jsonify(stations_list)
 
@@ -118,6 +118,7 @@ def tobs():
     # close link to database
     session.close()
 
+    #format query data into dictionary to jsonify
     dict = {}
     for n in most_active_station_data:
         dict[n[0]]=n[1]
@@ -126,6 +127,29 @@ def tobs():
     list = [dict]
 
     return jsonify(list)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
