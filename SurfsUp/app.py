@@ -41,6 +41,7 @@ def homepage():
         f"/api/v.1.0/start/end"
     )
 
+
 @app.route("/api/v.1.0/precipitation")
 def precipitation():
     # Create our session (link) from Python to the DB
@@ -116,6 +117,15 @@ def tobs():
 
     # close link to database
     session.close()
+
+    dict = {}
+    for n in most_active_station_data:
+        dict[n[0]]=n[1]
+
+    #dumping dictionary into list, to ensure code conforms with challenge requirements
+    list = [dict]
+
+    return jsonify(list)
 
 
 
