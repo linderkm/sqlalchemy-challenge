@@ -5,6 +5,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
+from tornado.autoreload import start
 
 #################################################
 # Database Setup
@@ -129,32 +130,48 @@ def tobs():
     return jsonify(list)
 
 
+@app.route("/api/v.1.0/<start_date>")
+def start_date(start_date):
+
+    #check if user input format matches db date format
+    #https: // www.geeksforgeeks.org / python - validate - string - date - format /
+
+    try:
+        bool(datetime.strptime(start_date,"%Y-%m-%d"))
+
+        session = Session(engine)
+
+        earliest_record = session.query(measurements.date).order_by(measurements.date).first()[0]
+        latest_record = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
+
+        if start_date <= latest_record and start_date>= earliest_record:
+
+            sel = [func.min(measurements.tobs),
+                   func.max(measurements.tobs),
+                   func.avg(measurements.tobs)
+                   ]
+
+            d = session.query(*sel).filter(measurements.date >= start_date).all()
+
+            values_dict = {'Minimum Recorded Temperature (f)':d[0][0],
+                           'Maximum Recorded Temperature (f)':d[0][1],
+                           'Average Recorded Temperature (f)':round(d[0][2],2)}
+            return_dict = {start_date:values_dict}
+
+            return jsonify(return_dict)
+
+        else:
+            return f"Input date out of range. Temperature records are only available from {earliest_record} to {latest_record}."
+
+        session.close()
 
 
+    except ValueError:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return f"Incorrect date format. Request using format YYY-MM-DD"
 
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
