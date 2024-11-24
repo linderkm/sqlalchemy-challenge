@@ -67,12 +67,38 @@ def precipitation():
     for n in d:
         dict[n[0]]=n[1]
 
-    print(d)
-    #return jsonify(dict)
+    return jsonify(dict)
+
+
+@app.route("/api/v.1.0/stations")
+def station():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #adding all query targets into list
+    sel = [stations.station, stations.name, stations.latitude, stations.longitude, stations.elevation]
+
+    #query to retrieve station data
+    d = session.query(*sel).all()
+
+    # close link to database.
+    session.close()
+
+    #format query data into list of dictionaries
+    stations_dict = []
+    for n in d:
+        station_dict = {}
+        station_dict['Name'] = n[1]
+        station_dict['Lat'] = n[2]
+        station_dict['Lon'] = n[3]
+        station_dict['Elevation'] = n[4]
+        stations_dict.append({n[0]:station_dict})
+
+
+    return jsonify(stations_dict)
 
 
 
 if __name__ == '__main__':
-    #app.run(debug=True)
-    precipitation()
+    app.run(debug=True)
 
