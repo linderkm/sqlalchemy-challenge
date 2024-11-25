@@ -26,6 +26,7 @@ stations = Base.classes.station
 #Module10;Lesson 3; Activity 10; app_solution.py
 app = Flask(__name__)
 
+
 #################################################
 # Flask Routes
 #################################################
@@ -57,7 +58,7 @@ def precipitation():
         order_by(measurements.date.desc()).\
         all()
 
-    # close link to database.
+    #end Python connection to db.
     session.close()
 
     #format the query data (d) into a dictionary
@@ -79,7 +80,7 @@ def station():
     #query to retrieve station data
     d = session.query(*sel).all()
 
-    # close link to database
+    #end Python connection to db.
     session.close()
 
     #format query data into list of dictionaries
@@ -115,7 +116,7 @@ def tobs():
         filter(measurements.station==station_count[0][0]).\
         all()
 
-    # close link to database
+    # end Python connection to db.
     session.close()
 
     #format query data into dictionary to jsonify
@@ -123,7 +124,7 @@ def tobs():
     for n in most_active_station_data:
         dict[n[0]]=n[1]
 
-    #dumping dictionary into list, to ensure code conforms with challenge requirements
+    #dump dictionary into list, to ensure code conforms with challenge requirements
     list = [dict]
 
     return jsonify(list)
@@ -131,42 +132,44 @@ def tobs():
 
 @app.route("/api/v.1.0/<start_date>")
 def start_date(start_date):
-
-    #check if user input format matches db date format
-    #https: // www.geeksforgeeks.org / python - validate - string - date - format /
-
+    #try except block that manages behavior based on user input.
+    # If the user inputs the incorrect date format, a ValueError is raised.
     try:
+        # check if user input format matches db date format
+        # https: // www.geeksforgeeks.org / python - validate - string - date - format /
         bool(datetime.strptime(start_date,"%Y-%m-%d"))
-
+        # Create session (link) from Python to the DB
         session = Session(engine)
 
+        #query the db to determine the earliest and latest record
         earliest_record = session.query(measurements.date).order_by(measurements.date).first()[0]
         latest_record = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
 
+        #check to ensure user input occurs within the db records
         if start_date <= latest_record and start_date>= earliest_record:
 
+            #setting query parameters
             sel = [func.min(measurements.tobs),
                    func.max(measurements.tobs),
                    func.avg(measurements.tobs)
                    ]
-
+            #query db, filtering by records that occur at or after the date submitted in Request
             d = session.query(*sel).filter(measurements.date >= start_date).all()[0]
-
+            # creating dictionary variable with query data.
             values_dict = {'Minimum Recorded Temperature (f)':d[0],
                            'Maximum Recorded Temperature (f)':d[1],
                            'Average Recorded Temperature (f)':d[2]}
             return_dict = {start_date:values_dict}
 
             return jsonify(return_dict)
-
+        #return error message if Request date value is outside the range of dates stored in the db.
         else:
             return f"Input date out of range. Temperature records are only available from {earliest_record} to {latest_record}."
 
+        # end Python connection to db.
         session.close()
 
-
     except ValueError:
-
         return f"Incorrect date format. Request using format YYY-MM-DD"
 
 
@@ -174,37 +177,36 @@ def start_date(start_date):
 
 @app.route("/api/v.1.0/<start>/<end_date>")
 def start_end_date(start,end_date):
-
-    #check if user input format matches db date format
-    #https: // www.geeksforgeeks.org / python - validate - string - date - format /
-
+    # check if user input, both start and end dates format, matches db date format
+    # https: // www.geeksforgeeks.org / python - validate - string - date - format /
     try:
         bool(datetime.strptime(start,"%Y-%m-%d")) and bool(datetime.strptime(end_date,"%Y-%m-%d"))
-
+        # Create session (link) from Python to the DB
         session = Session(engine)
-
+        # query the db to determine the earliest and latest record
         earliest_record = session.query(measurements.date).order_by(measurements.date).first()[0]
         latest_record = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
-
+        # conditional to check if Request start date input occurs within the db records
         if start <= latest_record and start>= earliest_record:
-
+            # conditional to check if Request end date input occurs within the db records
             if end_date <= latest_record and end_date >= earliest_record:
-
+                # conditional to check if Request start date occurs before Request end date (e.g. prevent start = 2015 and end = 2014)
                 if start < end_date:
-
+                    # setting query parameters
                     sel = [func.min(measurements.tobs),
                            func.max(measurements.tobs),
                            func.avg(measurements.tobs)
                            ]
-
+                    # query db, filtering by records that occur between Request start and end date values.
                     d = session.query(*sel).filter(measurements.date >= start).filter(measurements.date <= end_date).all()[0]
-
+                    # creating dictionary variable to store query data.
                     values_dict = {'Minimum Recorded Temperature (f)':d[0],
                                    'Maximum Recorded Temperature (f)':d[1],
                                    'Average Recorded Temperature (f)':d[2]}
                     return_dict = {f"{start} to {end_date}":values_dict}
 
                     return jsonify(return_dict)
+
                 else:
                     return "Requested start date must occur before requested end date."
 
@@ -214,19 +216,15 @@ def start_end_date(start,end_date):
         else:
             return f"Requested start date is out of range. Temperature records are only available from {earliest_record} to {latest_record}."
 
+        #end Python connection to db.
         session.close()
 
 
     except ValueError:
-
         return f"Incorrect date format. Request using format YYY-MM-DD"
 
 
-
-
-
-
-
+#activate Flask api when python file is run.
 if __name__ == '__main__':
     app.run(debug=True)
 
