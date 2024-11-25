@@ -107,12 +107,12 @@ def tobs():
     latest_date_minus_one_year = (datetime.strptime(latest_date.replace("-", "/"), "%Y/%m/%d") - timedelta(days=365)).strftime("%Y-%m-%d")
 
     # query to find the most active stations (2)
-    station_count = session.query(stations.station,func.count(stations.station)). \
-        group_by(stations.station). \
-        order_by(func.count(stations.station).desc()). \
+    station_count = session.query(measurements.station,func.count(measurements.station)). \
+        group_by(measurements.station). \
+        order_by(func.count(measurements.station).desc()). \
         all()
 
-    #query to find most recent 12 months of temperature (tobs) data from most active station (2)
+    #query to find most recent 12 months of temperature (tobs) data from most active station (station_count[0][0]) (2)
     most_active_station_data = session.query(measurements.date,measurements.tobs).\
         filter(measurements.date >= latest_date_minus_one_year).\
         filter(measurements.station==station_count[0][0]).\
@@ -126,8 +126,9 @@ def tobs():
     for n in most_active_station_data:
         dict[n[0]]=n[1]
 
+    display_dict = {station_count[0][0]:dict}
     #dump dictionary into list, to ensure code conforms with challenge requirements
-    list = [dict]
+    list = [display_dict]
 
     return jsonify(list)
 
