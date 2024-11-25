@@ -23,7 +23,7 @@ All references for sources used during the completion of this assignment are con
 
 (10) https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.plot.bar.html
 
-(11) https://pandas.pydata.org/pandas-docs/stable/getting_started/intro_tutorials/06_calculate_statistics.html
+(11) https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.describe.html
 
 (12) https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.distinct
 
