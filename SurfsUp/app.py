@@ -154,7 +154,7 @@ def start_date(start_date):
 
             values_dict = {'Minimum Recorded Temperature (f)':d[0],
                            'Maximum Recorded Temperature (f)':d[1],
-                           'Average Recorded Temperature (f)':round(d[2],4)}
+                           'Average Recorded Temperature (f)':d[2]}
             return_dict = {start_date:values_dict}
 
             return jsonify(return_dict)
@@ -168,6 +168,62 @@ def start_date(start_date):
     except ValueError:
 
         return f"Incorrect date format. Request using format YYY-MM-DD"
+
+
+
+
+@app.route("/api/v.1.0/<start>/<end_date>")
+def start_end_date(start,end_date):
+
+    #check if user input format matches db date format
+    #https: // www.geeksforgeeks.org / python - validate - string - date - format /
+
+    try:
+        bool(datetime.strptime(start,"%Y-%m-%d")) and bool(datetime.strptime(end_date,"%Y-%m-%d"))
+
+        session = Session(engine)
+
+        earliest_record = session.query(measurements.date).order_by(measurements.date).first()[0]
+        latest_record = session.query(measurements.date).order_by(measurements.date.desc()).first()[0]
+
+        if start <= latest_record and start>= earliest_record:
+
+            if end_date <= latest_record and end_date >= earliest_record:
+
+                if start < end_date:
+
+                    sel = [func.min(measurements.tobs),
+                           func.max(measurements.tobs),
+                           func.avg(measurements.tobs)
+                           ]
+
+                    d = session.query(*sel).filter(measurements.date >= start).filter(measurements.date <= end_date).all()[0]
+
+                    values_dict = {'Minimum Recorded Temperature (f)':d[0],
+                                   'Maximum Recorded Temperature (f)':d[1],
+                                   'Average Recorded Temperature (f)':d[2]}
+                    return_dict = {f"{start} to {end_date}":values_dict}
+
+                    return jsonify(return_dict)
+                else:
+                    return "Requested start date must occur before requested end date."
+
+            else:
+                return f"Requested end date is out of range. Temperature records are only available from {earliest_record} to {latest_record}."
+
+        else:
+            return f"Requested start date is out of range. Temperature records are only available from {earliest_record} to {latest_record}."
+
+        session.close()
+
+
+    except ValueError:
+
+        return f"Incorrect date format. Request using format YYY-MM-DD"
+
+
+
+
 
 
 
