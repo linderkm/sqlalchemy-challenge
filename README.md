@@ -27,7 +27,7 @@ All references for sources used during the completion of this assignment are con
 
 (12) https://docs.sqlalchemy.org/en/20/orm/queryguide/query.html#sqlalchemy.orm.Query.distinct
 
-(13) https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html
+(13) https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.plot.hist.html
 
 
 
